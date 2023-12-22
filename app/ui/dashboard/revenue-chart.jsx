@@ -11,8 +11,6 @@ import { Revenue } from '@/app/lib/definitions';
 
 export default async function RevenueChart({
   revenue,
-}: {
-  revenue: Revenue[];
 }) {
   const chartHeight = 350;
   // NOTE: comment in this code when you get to this point in the course
