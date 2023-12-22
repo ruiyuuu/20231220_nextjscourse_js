@@ -1,18 +1,11 @@
 import { sql } from '@vercel/postgres';
-import {
-  CustomerField,
-  CustomersTableType,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoiceRaw,
-  User,
-  Revenue,
-} from './definitions';
 import { formatCurrency } from './utils';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function fetchRevenue() {
   // Add noStore() here prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
+  noStore();
 
   try {
     // Artificially delay a response for demo purposes.
@@ -21,20 +14,21 @@ export async function fetchRevenue() {
     // console.log('Fetching revenue data...');
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const data = await sql<Revenue>`SELECT * FROM revenue`;
+    const data = await sql`SELECT * FROM revenue`;
 
     // console.log('Data fetch completed after 3 seconds.');
 
     return data.rows;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch revenue data.');
+    // throw new Error('Failed to fetch revenue data.');
   }
 }
 
 export async function fetchLatestInvoices() {
+  noStore();
   try {
-    const data = await sql<LatestInvoiceRaw>`
+    const data = await sql`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
@@ -48,11 +42,12 @@ export async function fetchLatestInvoices() {
     return latestInvoices;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
+    // throw new Error('Failed to fetch the latest invoices.');
   }
 }
 
 export async function fetchCardData() {
+  noStore();
   try {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
@@ -83,7 +78,7 @@ export async function fetchCardData() {
     };
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch card data.');
+    // throw new Error('Failed to fetch card data.');
   }
 }
 
@@ -92,7 +87,7 @@ export async function fetchFilteredInvoices() {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const invoices = await sql<InvoicesTable>`
+    const invoices = await sql`
       SELECT
         invoices.id,
         invoices.amount,
@@ -121,6 +116,7 @@ export async function fetchFilteredInvoices() {
 }
 
 export async function fetchInvoicesPages() {
+  noStore();
   try {
     const count = await sql`SELECT COUNT(*)
     FROM invoices
@@ -142,8 +138,10 @@ export async function fetchInvoicesPages() {
 }
 
 export async function fetchInvoiceById() {
+  noStore();
+
   try {
-    const data = await sql<InvoiceForm>`
+    const data = await sql`
       SELECT
         invoices.id,
         invoices.customer_id,
@@ -168,7 +166,7 @@ export async function fetchInvoiceById() {
 
 export async function fetchCustomers() {
   try {
-    const data = await sql<CustomerField>`
+    const data = await sql`
       SELECT
         id,
         name
@@ -186,7 +184,7 @@ export async function fetchCustomers() {
 
 export async function fetchFilteredCustomers() {
   try {
-    const data = await sql<CustomersTableType>`
+    const data = await sql`
 		SELECT
 		  customers.id,
 		  customers.name,
