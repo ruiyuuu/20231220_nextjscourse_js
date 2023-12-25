@@ -21,7 +21,7 @@ export async function fetchRevenue() {
     return data.rows;
   } catch (error) {
     console.error('Database Error:', error);
-    // throw new Error('Failed to fetch revenue data.');
+    throw new Error('Failed to fetch revenue data.');
   }
 }
 
@@ -35,14 +35,13 @@ export async function fetchLatestInvoices() {
       ORDER BY invoices.date DESC
       LIMIT 5`;
 
-    const latestInvoices = data.rows.map((invoice) => ({
-      ...invoice,
-      amount: formatCurrency(invoice.amount),
-    }));
+    const latestInvoices = data.rows.map((invoice) => (
+      invoice
+    ));
     return latestInvoices;
   } catch (error) {
     console.error('Database Error:', error);
-    // throw new Error('Failed to fetch the latest invoices.');
+    throw new Error('Failed to fetch the latest invoices.');
   }
 }
 
@@ -52,13 +51,13 @@ export async function fetchCardData() {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
     // how to initialize multiple queries in parallel with JS.
-    const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
-    const customerCountPromise = sql`SELECT COUNT(*) FROM customers`;
-    const invoiceStatusPromise = sql`SELECT
-         SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
-         SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
-         FROM invoices`;
-
+    const invoiceCountPromise = await sql`SELECT COUNT(*) FROM revenue`;
+    const customerCountPromise = await sql`SELECT COUNT(*) FROM customers`;
+    const invoiceStatusPromise = await sql`SELECT
+    SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
+    SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
+    FROM invoices`;
+    
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
@@ -78,12 +77,12 @@ export async function fetchCardData() {
     };
   } catch (error) {
     console.error('Database Error:', error);
-    // throw new Error('Failed to fetch card data.');
+    throw new Error('Failed to fetch card data.');
   }
 }
 
 const ITEMS_PER_PAGE = 6;
-export async function fetchFilteredInvoices() {
+export async function fetchFilteredInvoices(query,currentPage) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
@@ -111,7 +110,7 @@ export async function fetchFilteredInvoices() {
     return invoices.rows;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
+    // throw new Error('Failed to fetch invoices.');
   }
 }
 
@@ -151,11 +150,11 @@ export async function fetchInvoiceById() {
       WHERE invoices.id = ${id};
     `;
 
-    const invoice = data.rows.map((invoice) => ({
-      ...invoice,
-      // Convert amount from cents to dollars
-      amount: invoice.amount / 100,
-    }));
+    // const invoice = data.rows.map((invoice) => ({
+    //   ...invoice,
+    //   // Convert amount from cents to dollars
+    //   amount: invoice.amount / 100,
+    // }));
 
     return invoice[0];
   } catch (error) {
