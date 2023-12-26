@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 
 
-export function Button({ children}) {
+export function Button({ children, className, ...rest }) {
   return (
     <button
       {...rest}
