@@ -4,6 +4,9 @@ import { z } from "zod";
 import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
+
 
 const FormSchema = z.object({
   id: z.string(),
@@ -56,30 +59,29 @@ export async function createInvoice(prevState,formData) {
 
 const UpdateInvoice = FormSchema.omit(["id", "date"]);
 
-export async function updateInvoice(id, formData) {
-  const rawFormData = {
+export async function updateInvoice(id,prevState, formData) {
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get("customerId"),
     amount: formData.get("amount"),
     status: formData.get("status"),
-  };
+  });
 
-  if (!rawFormData.success) {
-    console.log(rawFormData)
-    // return {
-    //   errors: rawFormData.error.flatten().fieldErrors,
-    //   message: "Missing Fields. Failed to Update Invoice.",
-    // };
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Invoice.",
+    };
   }
  
-  // const { customerId, amount, status } = rawFormData.data;
-  const amountInCents = rawFormData.amount * 100;
+  const { customerId, amount, status } = validatedFields.data;
+  const amountInCents = amount * 100;
   
   try {
     await sql`
-    UPDATE invoices
-    SET customer_id = ${rawFormData.customerId}, amount = ${amountInCents}, status = ${rawFormData.status}
-    WHERE id = ${id}
-  `;
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      WHERE id = ${id}
+    `;
   } catch (error) {
     return { message: "Database Error: Failed to Update Invoice." };
   }
@@ -89,7 +91,7 @@ export async function updateInvoice(id, formData) {
 }
 
 export async function deleteInvoice(id) {
-  throw new Error("Failed to Delete Invoice");
+  // throw new Error("Failed to Delete Invoice");
   
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
@@ -97,5 +99,32 @@ export async function deleteInvoice(id) {
     return { message: "Deleted Invoice." };
   } catch (error) {
     return { message: "Database Error: Failed to Delete Invoice." };
+  }
+}
+
+export async function authenticate(
+  prevState,
+  formData
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    // if (error) {
+    //   switch (error.type) {
+    //     case 'CredentialsSignin':
+    //       return 'Invalid credentials.';
+    //     default:
+    //       return 'Something went wrong.';
+    //   }
+    // }
+    throw error;
   }
 }
