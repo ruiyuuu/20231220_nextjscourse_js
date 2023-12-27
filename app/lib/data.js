@@ -159,6 +159,8 @@ export async function fetchInvoiceById(id) {
     }
     ));
 
+    console.log("------"+invoice)
+
     return invoice[0];
   } catch (error) {
     console.error('Database Error:', error);
@@ -177,6 +179,7 @@ export async function fetchCustomers() {
     `;
 
     const customers = data.rows;
+    console.log("------"+customers)
     return customers;
   } catch (err) {
     console.error('Database Error:', err);
@@ -184,7 +187,7 @@ export async function fetchCustomers() {
   }
 }
 
-export async function fetchFilteredCustomers() {
+export async function fetchFilteredCustomers(query) {
   try {
     const data = await sql`
 		SELECT
@@ -213,7 +216,7 @@ export async function fetchFilteredCustomers() {
     return customers;
   } catch (err) {
     console.error('Database Error:', err);
-    throw new Error('Failed to fetch customer table.');
+    // throw new Error('Failed to fetch customer table.');
   }
 }
 
