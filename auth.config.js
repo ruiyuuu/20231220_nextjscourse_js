@@ -17,7 +17,5 @@ callbacks: {
       return true;
     },
   },
-  providers: [
-    {secret: process.env.AUTH_SECRET,}
-  ], // Add providers with an empty array for now
+  providers: [], // Add providers with an empty array for now
 };
